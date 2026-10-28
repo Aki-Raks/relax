@@ -3,6 +3,9 @@ const todosContainer = document.getElementById('todos-container');
 const addTodoBtn = document.getElementById('add-todo-btn');
 const saveBtn = document.getElementById('save-btn');
 
+// Ключ для хранения данных в памяти приложения / браузера
+const STORAGE_KEY = 'my_chill_themes';
+
 function validateForm() {
   const themeValue = themeInput.value.trim();
   const todoInputs = todosContainer.querySelectorAll('.todo-input');
@@ -49,9 +52,11 @@ addTodoBtn.addEventListener('click', () => {
 themeInput.addEventListener('input', validateForm);
 
 const initialTodoInput = todosContainer.querySelector('.todo-input');
-initialTodoInput.addEventListener('input', validateForm);
+if (initialTodoInput) {
+  initialTodoInput.addEventListener('input', validateForm);
+}
 
-// Сохранение с накоплением и порядковым ID
+// Сохранение с накоплением и порядковым ID в localStorage
 saveBtn.addEventListener('click', async () => {
   if (!saveBtn.classList.contains('active')) return;
 
@@ -67,15 +72,21 @@ saveBtn.addEventListener('click', async () => {
   });
 
   try {
-    // 1. Читаем текущий файл data.json из папки проекта
+    // 1. Читаем текущие данные из localStorage или из data.json при первом запуске
     let existingData = [];
-    try {
-      const response = await fetch('data.json');
-      if (response.ok) {
-        existingData = await response.json();
+    const savedData = localStorage.getItem(STORAGE_KEY);
+
+    if (savedData) {
+      existingData = JSON.parse(savedData);
+    } else {
+      try {
+        const response = await fetch('data.json');
+        if (response.ok) {
+          existingData = await response.json();
+        }
+      } catch (e) {
+        console.log('Файл data.json не найден, создаем с нуля.');
       }
-    } catch (e) {
-      console.log('Файл data.json не найден, создаем с нуля.');
     }
 
     // 2. Вычисляем порядковый ID (следующий номер)
@@ -96,27 +107,16 @@ saveBtn.addEventListener('click', async () => {
     // 3. Добавляем новый список к уже имеющимся данным
     existingData.push(newList);
 
-    // 4. Формируем и скачиваем новый файл со всеми данными
-    const jsonString = JSON.stringify(existingData, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
+    // 4. Сохраняем обновленный массив в память устройства
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(existingData));
 
-    const downloadLink = document.createElement('a');
-    downloadLink.href = url;
-    downloadLink.download = 'data.json';
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    
-    document.body.removeChild(downloadLink);
-    URL.revokeObjectURL(url);
-
-    alert(`Список «${theme}» успешно добавлен (ID: ${nextId})! Файл data.json скачан. Замени им старый файл в папке проекта.`);
+    alert(`Список «${theme}» успешно создан и сохранен (ID: ${nextId})!`);
     
     // Возвращаемся на главную
     window.location.href = 'index.html';
 
   } catch (error) {
     console.error('Ошибка при сохранении:', error);
-    alert('Не удалось сформировать файл. Проверь консоль (F12).');
+    alert('Не удалось сохранить данные. Проверь консоль (F12).');
   }
 });

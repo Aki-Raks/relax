@@ -7,20 +7,36 @@ const themeInput = document.getElementById('theme-input');
 const todosContainer = document.getElementById('todos-container');
 const saveBtn = document.getElementById('save-btn');
 
-// 1. При загрузке страницы читаем data.json
+// Ключ для хранения данных в памяти приложения / браузера
+const STORAGE_KEY = 'my_chill_themes';
+
+// 1. При загрузке страницы читаем из localStorage (или из data.json при первом запуске)
 async function loadThemesForEdit() {
   try {
-    const response = await fetch('data.json');
-    if (response.ok) {
-      allData = await response.json();
+    const savedData = localStorage.getItem(STORAGE_KEY);
+    
+    if (savedData) {
+      allData = JSON.parse(savedData);
       initDropdown();
     } else {
-      alert('Не удалось загрузить data.json');
+      const response = await fetch('data.json');
+      if (response.ok) {
+        allData = await response.json();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(allData));
+        initDropdown();
+      } else {
+        alert('Не удалось загрузить data.json');
+      }
     }
   } catch (e) {
     console.error('Ошибка:', e);
-    alert('Ошибка чтения data.json');
+    alert('Ошибка чтения данных');
   }
+}
+
+// Вспомогательная функция для сохранения массива в localStorage
+function saveToStorage() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(allData));
 }
 
 // Заполняем селект с дефолтным прочерком
@@ -114,9 +130,6 @@ function addTodoRow(text = '') {
 }
 
 // Обработка кнопки "+" для добавления пустой строки
-// Создадим её программно или привяжемся, если вынесем в HTML. 
-// Давай добавим кнопку плюса динамически под списком дел или вставим в разметку.
-// Удобнее сделать кнопку плюса прямо под контейнером дел в JS:
 let addMoreBtn = document.getElementById('add-more-btn');
 if (!addMoreBtn) {
   addMoreBtn = document.createElement('button');
@@ -136,7 +149,7 @@ addMoreBtn.addEventListener('click', () => {
 
 themeInput.addEventListener('input', validateForm);
 
-// Сохранение изменений по ID
+// Сохранение изменений по ID в localStorage
 saveBtn.addEventListener('click', () => {
   if (!saveBtn.classList.contains('active') || !selectedItem) return;
 
@@ -158,21 +171,10 @@ saveBtn.addEventListener('click', () => {
     allData[itemIndex].to_do = newTodos;
   }
 
-  // Формируем и скачиваем обновленный файл data.json
-  const jsonString = JSON.stringify(allData, null, 2);
-  const blob = new Blob([jsonString], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
+  // Сохраняем обновленный массив прямо в память устройства
+  saveToStorage();
 
-  const downloadLink = document.createElement('a');
-  downloadLink.href = url;
-  downloadLink.download = 'data.json';
-  document.body.appendChild(downloadLink);
-  downloadLink.click();
-  
-  document.body.removeChild(downloadLink);
-  URL.revokeObjectURL(url);
-
-  alert(`Список с ID ${selectedItem.id} успешно обновлен! Файл data.json скачан. Замени им старый файл в папке.`);
+  alert(`Список с ID ${selectedItem.id} успешно обновлен и сохранен!`);
   window.location.href = 'index.html';
 });
 

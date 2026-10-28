@@ -4,16 +4,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let allThemes = [];
 
-  // Загружаем данные (замени на свою логику загрузки, если у тебя хранение в другом виде)
+  // Ключ, под которым данные будут храниться в памяти браузера / приложения
+  const STORAGE_KEY = 'my_chill_themes';
+
+  // Загружаем данные: сначала проверяем localStorage, если там пусто — берем data.json и сохраняем
   async function loadThemes() {
     try {
-      const response = await fetch('data.json');
-      allThemes = await response.json();
+      const savedData = localStorage.getItem(STORAGE_KEY);
+      
+      if (savedData) {
+        allThemes = JSON.parse(savedData);
+      } else {
+        const response = await fetch('data.json');
+        allThemes = await response.json();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(allThemes));
+      }
+      
       renderCards(allThemes);
     } catch (error) {
       console.error('Ошибка загрузки данных:', error);
       gridContainer.innerHTML = '<p style="color:white; text-align:center;">Не удалось загрузить данные.</p>';
     }
+  }
+
+  // Вспомогательная функция для сохранения текущего массива в localStorage
+  function saveThemes() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(allThemes));
   }
 
   // Отрисовка карточек
@@ -43,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
       gridContainer.appendChild(card);
     });
 
-    // Навешиваем слушатьли на кнопки удаления
+    // Навешиваем слушатели на кнопки удаления
     document.querySelectorAll('.btn-delete-card').forEach(button => {
       button.addEventListener('click', (e) => {
         const indexToDelete = e.target.getAttribute('data-index');
@@ -61,34 +77,19 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCards(filtered);
   });
 
-  // Функция удаления (пример для логики)
+  // Функция удаления с сохранением в localStorage
   function deleteTheme(index) {
     if (confirm('Точно удалить эту тему?')) {
       // 1. Удаляем элемент из общего массива
       allThemes.splice(index, 1);
 
-      // 2. Перерисовываем сетку карточек на странице
+      // 2. Сохраняем изменения прямо в память устройства (без скачивания файлов)
+      saveThemes();
+
+      // 3. Перерисовываем сетку карточек на странице
       renderCards(allThemes);
 
-      // 3. Создаем Blob из обновленного массива данных
-      const dataStr = JSON.stringify(allThemes, null, 2);
-      const blob = new Blob([dataStr], { type: 'application/json' });
-      
-      // 4. Создаем временную ссылку для скачивания и «кликаем» по ней программно
-      const url = URL.createObjectURL(blob);
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.href = url;
-      downloadAnchor.download = 'data.json'; // Имя файла для сохранения
-      
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      
-      // 5. Убираем за собой мусор в памяти
-      document.body.removeChild(downloadAnchor);
-      URL.revokeObjectURL(url);
-
-      // Уведомление (опционально)
-      console.log('Тема удалена, новый data.json сгенерирован и скачан.');
+      console.log('Тема успешно удалена и сохранена в localStorage.');
     }
   }
 

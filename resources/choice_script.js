@@ -1,17 +1,30 @@
 let themesData = [];
 
-// Функция загрузки данных (читаем из data.json)
-function loadData() {
-  fetch('data.json')
-    .then(response => response.json())
-    .then(data => {
-      themesData = data;
+// Ключ для хранения данных в памяти приложения / браузера
+const STORAGE_KEY = 'my_chill_themes';
+
+// Функция загрузки данных (читаем из localStorage, при первом запуске — из data.json)
+async function loadData() {
+  try {
+    const savedData = localStorage.getItem(STORAGE_KEY);
+    
+    if (savedData) {
+      themesData = JSON.parse(savedData);
       initSelect();
-    })
-    .catch(error => {
-      console.error('Ошибка загрузки JSON:', error);
-      document.getElementById('result-container').textContent = 'Не удалось загрузить data.json :(';
-    });
+    } else {
+      const response = await fetch('data.json');
+      if (response.ok) {
+        themesData = await response.json();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(themesData));
+        initSelect();
+      } else {
+        throw new Error('Не удалось загрузить data.json');
+      }
+    }
+  } catch (error) {
+    console.error('Ошибка загрузки данных:', error);
+    document.getElementById('result-container').textContent = 'Не удалось загрузить данные :(';
+  }
 }
 
 // Функция заполнения селекта темами
