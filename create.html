@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Создать новый список</title>  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="card create-card">
+    <h2>Новый список</h2>
+    <div class="form-group">
+      <label for="theme-input">Тема</label>
+      <input type="text" id="theme-input" class="input-box" placeholder="Например: Отдых в выходные">
+    </div>
+    <div class="form-group">
+      <label>Пункты на поделать</label>
+      <div id="todos-container">
+        <div class="todo-row">
+          <input type="text" class="input-box todo-input" placeholder="Например: Поспать полчаса">
+          <button type="button" class="btn-add" id="add-todo-btn">+</button>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-save" id="save-btn" disabled>Сохранить</button>
+    <a href="index.html" class="back-link" style="text-align: center;">← На главную</a>
+  </div>
+</body>
+<script src="create_script.js"></script>
+</html>
