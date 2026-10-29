@@ -298,10 +298,8 @@ body.gallery-body {
   word-break: break-word;
 }
 
-.btn-delete-card {
-  background-color: rgba(255, 75, 75, 0.2);
-  border: 2px solid #ff6b6b;
-  color: #ffffff;
+.btn-take, .btn-delete-card {
+  width: 100%;
   padding: 8px 12px;
   border-radius: 10px;
   font-size: 0.9rem;
@@ -312,8 +310,31 @@ body.gallery-body {
   margin-top: 5px;
 }
 
+/* Кнопка «Взять» (зеленая тема) */
+.btn-take {
+  background-color: rgba(76, 175, 80, 0.2);
+  border: 2px solid #4CAF50;
+  color: #ffffff;
+}
+
+.btn-take:hover {
+  background-color: #4CAF50;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.btn-take.copied {
+  background-color: #2E7D32;
+  border-color: #2E7D32;
+}
+
+/* Кнопка «Удалить» (красная тема) */
+.btn-delete-card {
+  background-color: rgba(255, 75, 75, 0.2);
+  border: 2px solid #ff6b6b;
+  color: #ffffff;
+}
+
 .btn-delete-card:hover {
   background-color: #ff6b6b;
-  color: #ffffff;
   box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
 }
