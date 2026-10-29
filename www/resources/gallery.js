@@ -4,10 +4,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let allThemes = [];
 
-  // Ключ, под которым данные будут храниться в памяти браузера / приложения
+  // Ключ, под которым данные хранятся в localStorage приложения
   const STORAGE_KEY = 'my_chill_themes';
 
-  // Загружаем данные: сначала проверяем localStorage, если там пусто — берем data.json и сохраняем
+  // Загружаем данные: сначала проверяем localStorage, если пусто — берем из data.json
   async function loadThemes() {
     try {
       const savedData = localStorage.getItem(STORAGE_KEY);
@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         const response = await fetch('data.json');
         allThemes = await response.json();
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(allThemes));
+        saveThemes();
       }
       
       renderCards(allThemes);
@@ -53,20 +53,73 @@ document.addEventListener('DOMContentLoaded', () => {
       card.innerHTML = `
         <h3>${item.theme}</h3>
         ${itemsListHTML}
-        <button class="btn-delete-card" data-index="${index}">Удалить</button>
+        <button type="button" class="btn-take" data-index="${index}">Взять</button>
+        <button type="button" class="btn-delete-card" data-index="${index}">Удалить</button>
       `;
 
       gridContainer.appendChild(card);
     });
-
-    // Навешиваем слушатели на кнопки удаления
-    document.querySelectorAll('.btn-delete-card').forEach(button => {
-      button.addEventListener('click', (e) => {
-        const indexToDelete = e.target.getAttribute('data-index');
-        deleteTheme(indexToDelete);
-      });
-    });
   }
+
+  // Единый глобальный слушатель на контейнер (делегирование событий для кнопок)
+  gridContainer.addEventListener('click', (e) => {
+    
+    // 1. Клик по кнопке «Взять» (копирование)
+    const takeBtn = e.target.closest('.btn-take');
+    if (takeBtn) {
+      const index = takeBtn.getAttribute('data-index');
+      const targetItem = allThemes[index];
+
+      if (targetItem) {
+        let textToCopy = `Тема: ${targetItem.theme}\n`;
+        if (targetItem.to_do && targetItem.to_do.length > 0) {
+          targetItem.to_do.forEach(todo => {
+            textToCopy += `- ${todo}\n`;
+          });
+        }
+
+        const cleanText = textToCopy.trim();
+
+        // Надежный метод копирования через временный textarea (отлично работает в Android WebView)
+        const textarea = document.createElement('textarea');
+        textarea.value = cleanText;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+
+        try {
+          const successful = document.execCommand('copy');
+          if (successful) {
+            const originalText = takeBtn.textContent;
+            takeBtn.textContent = 'Взято! ✓';
+            takeBtn.classList.add('copied');
+
+            setTimeout(() => {
+              takeBtn.textContent = originalText;
+              takeBtn.classList.remove('copied');
+            }, 1500);
+          } else {
+            alert('Не удалось скопировать текст');
+          }
+        } catch (err) {
+          console.error('Ошибка копирования:', err);
+          alert('Ошибка при копировании');
+        }
+
+        document.body.removeChild(textarea);
+      }
+      return;
+    }
+
+    // 2. Клик по кнопке «Удалить»
+    const deleteBtn = e.target.closest('.btn-delete-card');
+    if (deleteBtn) {
+      const indexToDelete = deleteBtn.getAttribute('data-index');
+      deleteTheme(indexToDelete);
+    }
+  });
 
   // Живой поиск по названию темы
   searchInput.addEventListener('input', (e) => {
@@ -83,11 +136,15 @@ document.addEventListener('DOMContentLoaded', () => {
       // 1. Удаляем элемент из общего массива
       allThemes.splice(index, 1);
 
-      // 2. Сохраняем изменения прямо в память устройства (без скачивания файлов)
+      // 2. Сохраняем изменения в память устройства
       saveThemes();
 
-      // 3. Перерисовываем сетку карточек на странице
-      renderCards(allThemes);
+      // 3. Перерисовываем сетку с учетом текущего поиска
+      const searchText = searchInput.value.toLowerCase().trim();
+      const filtered = allThemes.filter(item => 
+        item.theme.toLowerCase().includes(searchText)
+      );
+      renderCards(filtered);
 
       console.log('Тема успешно удалена и сохранена в localStorage.');
     }
